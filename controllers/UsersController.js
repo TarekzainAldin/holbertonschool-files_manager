@@ -1,4 +1,5 @@
 import dbClient from '../utils/db';
+// eslint-disable-next-line no-unused-vars
 import redisClient from '../utils/redis';
 
 class UsersController {
