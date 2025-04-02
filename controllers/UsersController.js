@@ -29,6 +29,5 @@ class UsersController {
     res.status(201);
     return res.json({ id, email });
   }
-
 }
 export default UsersController;
