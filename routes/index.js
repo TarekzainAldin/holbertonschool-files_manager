@@ -1,11 +1,12 @@
 import express from 'express';
 import AppController from '../controllers/AppController';
+import UsersController from '../controllers/UsersController';
 
-const router = express.Router();
+const app = express.Router();
 
-router.use(express.json());
+app.use(express.json());
 
-router.get('/status', AppController.getStatus);
-router.get('/stats', AppController.getStats);
-
-export default router;
+app.get('/status', AppController.getStatus);
+app.get('/stats', AppController.getStats);
+app.post('users', UsersController.postNew);
+export default app;
