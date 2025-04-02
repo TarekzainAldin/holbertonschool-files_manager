@@ -1,12 +1,20 @@
-import redisClient from './utils/redis';
+import dbClient from './utils/db';
 
-(async () => {
-  console.log(redisClient.isAlive());
-  console.log(await redisClient.get('myKey'));
-  await redisClient.set('myKey', 12, 5);
-  console.log(await redisClient.get('myKey'));
+const waitConnection = () => new Promise((resolve, reject) => {
+  let i = 0;
+  const repeatFct = async () => {
+    setTimeout(async () => {
+      i += 1;
+      if (i >= 10) {
+        reject();
+      } else if (!dbClient.isAlive()) {
+        repeatFct();
+      } else {
+        resolve();
+      }
+    }, 1000);
+  };
+  repeatFct();
+});
 
-  setTimeout(async () => {
-    console.log(await redisClient.get('myKey'));
-  }, 1000 * 10);
-})();
+export default waitConnection;
