@@ -1,5 +1,5 @@
 import express from 'express';
-import routes from './routes/index.js'; // ✅ تأكد من استيراد `routes`
+import routes from './routes/index';
 
 const app = express();
 const port = process.env.PORT || 5000;
