@@ -1,51 +1,53 @@
-import { createClient } from 'redis';
+import redis from 'redis';
 import { promisify } from 'util';
 
 class RedisClient {
   constructor() {
-    this.client = createClient();
-    this.connected = false;
-
-    this.client.on('error', (err) => console.error('Redis client error:', err));
-    this.client.on('ready', () => {
-      this.connected = true;
+    // Création d'un client Redis
+    this.client = redis.createClient();
+    this.client.on('error', (error) => {
+      console.log(error);
     });
 
-    // Promisify methods
+    // Conversion des méthodes callback de Redis en promesses pour une utilisation asynchrone
     this.getAsync = promisify(this.client.get).bind(this.client);
-    this.setexAsync = promisify(this.client.setex).bind(this.client);
+    this.setAsync = promisify(this.client.set).bind(this.client);
     this.delAsync = promisify(this.client.del).bind(this.client);
   }
 
   isAlive() {
-    return this.connected;
+    return this.client.connected;
   }
 
+  // Méthode asynchrone pour obtenir la valeur d'une clé Redis
   async get(key) {
     try {
-      return await this.getAsync(key);
+      const value = await this.getAsync(key);
+      return (value);
     } catch (err) {
-      console.error('Redis get error:', err);
+      console.error('Error fetching value:', err);
       return null;
     }
   }
 
+  // Méthode asynchrone pour définir une clé Redis avec une durée d'expiration
   async set(key, value, duration) {
     try {
-      await this.setexAsync(key, duration, value);
+      await this.setAsync(key, value, 'EX', duration);
     } catch (err) {
-      console.error('Redis set error:', err);
+      console.error('Error setting value:', err);
     }
   }
 
+  // Méthode asynchrone pour supprimer une clé Redis
   async del(key) {
     try {
       await this.delAsync(key);
     } catch (err) {
-      console.error('Redis del error:', err);
+      console.error('Error deleting value:', err);
     }
   }
 }
-
+// Création d'une instance de RedisClient
 const redisClient = new RedisClient();
 export default redisClient;
