@@ -1,12 +1,10 @@
 import express from 'express';
-import AppController from '../controllers/AppController';
-import UsersController from '../controllers/UsersController';
+import UsersController from '../controllers/UsersController.js'; // Ensure you import the UsersController correctly
 
 const app = express.Router();
+app.use(express.json()); // Middleware to parse JSON request bodies
 
-app.use(express.json());
+// POST route to create a new user
+app.post('/users', UsersController.postNew);
 
-app.get('/status', AppController.getStatus);
-app.get('/stats', AppController.getStats);
-app.post('users', UsersController.postNew);
 export default app;
