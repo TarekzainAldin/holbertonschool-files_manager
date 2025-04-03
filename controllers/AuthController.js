@@ -1,67 +1,43 @@
-import bcrypt from 'bcrypt';
+import sha1 from 'sha1';
 import { v4 as uuidv4 } from 'uuid';
-import dbClient from '../utils/db';
-import redisClient from '../utils/redis';
+import DBClient from '../utils/db';
+import RedisClient from '../utils/redis';
 
 class AuthController {
-  static async getConnect(req, res) {
-    const authHeader = req.headers.authorization || '';
-    if (!authHeader.startsWith('Basic ')) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+  static async getConnect(request, response) {
+    const authorization = request.header('Authorization') || null;
+    if (!authorization) return response.status(401).send({ error: 'Unauthorized' });
 
-    const base64Credentials = authHeader.split(' ')[1];
-    let credentials;
-    try {
-      credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
-    } catch (err) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+    const buff = Buffer.from(authorization.replace('Basic ', ''), 'base64');
+    const credentials = {
+      email: buff.toString('utf-8').split(':')[0],
+      password: buff.toString('utf-8').split(':')[1],
+    };
 
-    const [email, password] = credentials.split(':');
-    if (!email || !password) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+    if (!credentials.email || !credentials.password) return response.status(401).send({ error: 'Unauthorized' });
 
-    // Check user in database
-    const user = await dbClient.db.collection('users').findOne({ email });
+    credentials.password = sha1(credentials.password);
 
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
+    const userExists = await DBClient.db.collection('users').findOne(credentials);
+    if (!userExists) return response.status(401).send({ error: 'Unauthorized' });
 
-    // Compare password using bcrypt
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) {
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
-
-    // Create a token
     const token = uuidv4();
-    const tokenKey = `auth_${token}`;
-    const value = user._id.toString();
-    const duration = 24 * 60 * 60; // 24 hours
-    await redisClient.set(tokenKey, value, duration);
+    const key = `auth_${token}`;
+    await RedisClient.set(key, userExists._id.toString(), 86400);
 
-    return res.status(200).json({ token });
+    return response.status(200).send({ token });
   }
 
-  static async getDisconnect(req, res) {
-    const token = req.header('X-Token');
-    if (!token) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+  static async getDisconnect(request, response) {
+    const token = request.header('X-Token') || null;
+    if (!token) return response.status(401).send({ error: 'Unauthorized' });
 
-    const tokenKey = `auth_${token}`;
-    const userId = await redisClient.get(tokenKey);
+    const redisToken = await RedisClient.get(`auth_${token}`);
+    if (!redisToken) return response.status(401).send({ error: 'Unauthorized' });
 
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    await redisClient.del(tokenKey);
-    return res.status(204).send();
+    await RedisClient.del(`auth_${token}`);
+    return response.status(204).send();
   }
 }
 
-export default AuthController;
+module.exports = AuthController;

@@ -1,27 +1,27 @@
-import express from 'express';
 import AppController from '../controllers/AppController';
 import UsersController from '../controllers/UsersController';
 import AuthController from '../controllers/AuthController';
 import FilesController from '../controllers/FilesController';
 
-const app = express.Router();
+const express = require('express');
 
-app.get('/status', AppController.getStatus);
-app.get('/stats', AppController.getStats);
+const router = (app) => {
+  const paths = express.Router();
+  app.use(express.json());
+  app.use('/', paths);
 
-app.post('/users', UsersController.postNew);
+  paths.get('/status', ((request, response) => AppController.getStatus(request, response)));
+  paths.get('/stats', ((request, response) => AppController.getStats(request, response)));
+  paths.post('/users', ((request, response) => UsersController.postNew(request, response)));
+  paths.get('/connect', ((request, response) => AuthController.getConnect(request, response)));
+  paths.get('/disconnect', ((request, response) => AuthController.getDisconnect(request, response)));
+  paths.get('/users/me', ((request, response) => UsersController.getMe(request, response)));
+  paths.post('/files', ((request, response) => FilesController.postUpload(request, response)));
+  paths.get('/files/:id', ((request, response) => FilesController.getShow(request, response)));
+  paths.get('/files', ((request, response) => FilesController.getIndex(request, response)));
+  paths.put('/files/:id/publish', ((request, response) => FilesController.putPublish(request, response)));
+  paths.put('/files/:id/unpublish', ((request, response) => FilesController.putUnpublish(request, response)));
+  paths.get('/files/:id/data', ((request, response) => FilesController.getFile(request, response)));
+};
 
-app.get('/connect', AuthController.getConnect);
-app.get('/disconnect', AuthController.getDisconnect);
-app.get('/users/me', UsersController.getMe);
-
-app.post('/files', FilesController.postUpload);
-app.get('/files/:id', FilesController.getShow);
-app.get('/files', FilesController.getIndex);
-
-app.put('/files/:id/publish', FilesController.putPublish);
-app.put('/files/:id/unpublish', FilesController.putUnpublish);
-
-app.get('/files/:id/data', FilesController.getFile);
-
-export default app;
+export default router;
