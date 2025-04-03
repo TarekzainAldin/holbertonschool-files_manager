@@ -26,7 +26,11 @@ class FilesController {
 
     // Verification of the request data
     const {
-      name, type, parentId, isPublic, data,
+      name,
+      type,
+      parentId,
+      isPublic,
+      data,
     } = req.body;
 
     if (!name) {
@@ -81,7 +85,7 @@ class FilesController {
     if (!fs.existsSync(folderPath)) {
       fs.mkdirSync(folderPath, { recursive: true }, (err) => {
         if (err) {
-          console.error('A problem occurred when creating the directory', err);
+          console.error('A problem occured when creating the directory', err);
           res.status(500).end();
         }
       });
@@ -89,12 +93,12 @@ class FilesController {
     const decryptedData = Buffer.from(data, 'base64');
     fs.writeFileSync(filePath, decryptedData, (err) => {
       if (err) {
-        console.error('A problem occurred when creating the file', err);
+        console.error('A problem occured when creating the file', err);
         res.status(500).end();
       }
     });
 
-    // Save file to database
+    // File to database
     const newFile = {
       userId: user._id,
       name,
@@ -169,6 +173,7 @@ class FilesController {
     const skip = parseInt(page, 10) * 20;
 
     let match;
+
     if (parentId === '0') {
       match = { userId: userIdToFind };
     } else {
@@ -209,10 +214,7 @@ class FilesController {
 
     const fileId = new ObjectId(req.params.id);
     const filesCollection = dbClient.db.collection('files');
-    const file = await filesCollection.findOne({
-      _id: fileId,
-      userId: new ObjectId(userId),
-    });
+    const file = await filesCollection.findOne({ _id: fileId, userId: new ObjectId(userId) });
 
     if (!file) {
       return res.status(404).json({ error: 'Not found' });
@@ -244,10 +246,7 @@ class FilesController {
 
     const fileId = new ObjectId(req.params.id);
     const filesCollection = dbClient.db.collection('files');
-    const file = await filesCollection.findOne({
-      _id: fileId,
-      userId: new ObjectId(userId),
-    });
+    const file = await filesCollection.findOne({ _id: fileId, userId: new ObjectId(userId) });
 
     if (!file) {
       return res.status(404).json({ error: 'Not found' });
@@ -320,10 +319,10 @@ class FilesController {
       const mimeType = mime.lookup(file.name);
       res.setHeader('Content-Type', mimeType);
       const fileContent = fs.readFileSync(filePath);
-      return res.status(200).send(fileContent);
+      return res.status(200).send(fileContent); // Assurez-vous de retourner une réponse
     } catch (error) {
       console.error(`Error processing file with ID ${id}:`, error);
-      return res.status(400).json({ error: 'Invalid file ID' });
+      return res.status(400).json({ error: 'Invalid file ID' }); // Assurez-vous de retourner une réponse en cas d'erreur
     }
   }
 }

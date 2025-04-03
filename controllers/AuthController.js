@@ -24,9 +24,7 @@ class AuthController {
     }
 
     const hashedPassword = sha1(password);
-    const user = await dbClient.db
-      .collection('users')
-      .findOne({ email, password: hashedPassword });
+    const user = await dbClient.db.collection('users').findOne({ email, password: hashedPassword });
 
     if (!user) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -35,7 +33,7 @@ class AuthController {
     const token = uuidv4();
     const tokenKey = `auth_${token}`;
     const value = user._id.toString();
-    const duration = 24 * 60 * 60; // 24 hours
+    const duration = 24 * 60 * 60; // 24 heures
     await redisClient.set(tokenKey, value, duration);
 
     return res.status(200).json({ token });
